@@ -255,13 +255,18 @@ body{font-family:var(--font-main);background:var(--bg-0);color:var(--text-1);min
 .tag-neutral{background:var(--accent-dim);color:var(--text-3)}
 
 /* ═══ FEAR & GREED ═══ */
+.fg-dual{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .fg-meter{display:flex;flex-direction:column;align-items:center;padding:8px 0}
-.fg-gauge{position:relative;width:190px;height:105px;overflow:hidden}
-.fg-gauge-bg{width:190px;height:190px;border-radius:50%;background:conic-gradient(var(--red) 0deg,#e87d3e 60deg,var(--yellow) 108deg,var(--green) 180deg);mask:radial-gradient(circle at 50% 50%,transparent 58px,black 59px);-webkit-mask:radial-gradient(circle at 50% 50%,transparent 58px,black 59px)}
-.fg-needle{position:absolute;bottom:0;left:50%;width:3px;height:72px;background:var(--text-1);border-radius:2px;transform-origin:bottom center;transform:translateX(-50%) rotate(var(--needle-deg,-45deg));transition:transform 1.2s cubic-bezier(.4,0,.2,1)}
-.fg-needle::after{content:'';position:absolute;top:-5px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:50%;background:var(--text-1)}
-.fg-value{font-family:var(--font-mono);font-size:2.2rem;font-weight:700;color:var(--accent);margin-top:8px;line-height:1}
-.fg-label{font-size:0.76rem;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:1.2px;margin-top:4px}
+.fg-meter-title{font-size:0.68rem;font-family:var(--font-mono);font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.fg-meter-title .fg-src{padding:2px 7px;border-radius:4px;background:var(--accent-dim);color:var(--accent);font-size:0.6rem;letter-spacing:.5px}
+.fg-gauge{position:relative;width:160px;height:88px;overflow:hidden}
+.fg-gauge-bg{width:160px;height:160px;border-radius:50%;background:conic-gradient(var(--red) 0deg,#e87d3e 60deg,var(--yellow) 108deg,var(--green) 180deg);mask:radial-gradient(circle at 50% 50%,transparent 48px,black 49px);-webkit-mask:radial-gradient(circle at 50% 50%,transparent 48px,black 49px)}
+.fg-needle{position:absolute;bottom:0;left:50%;width:3px;height:60px;background:var(--text-1);border-radius:2px;transform-origin:bottom center;transform:translateX(-50%) rotate(var(--needle-deg,-45deg));transition:transform 1.2s cubic-bezier(.4,0,.2,1)}
+.fg-needle::after{content:'';position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:9px;height:9px;border-radius:50%;background:var(--text-1)}
+.fg-value{font-family:var(--font-mono);font-size:1.8rem;font-weight:700;color:var(--accent);margin-top:6px;line-height:1}
+.fg-label{font-size:0.7rem;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+.fg-divider{width:1px;background:var(--border);align-self:stretch;margin:0 -8px}
+@media(max-width:600px){.fg-dual{grid-template-columns:1fr}.fg-divider{display:none}}
 
 /* ═══ REMINDERS ═══ */
 .reminder-input-row{display:flex;gap:8px;margin-bottom:10px}
@@ -375,17 +380,26 @@ body::before{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
 <!-- ═══ MAIN ═══ -->
 <main class="main">
 
-  <!-- LEFT: Fear & Greed Index -->
+  <!-- LEFT: Fear & Greed Dual Index -->
   <div class="card">
     <div class="card-head">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       Fear &amp; Greed Index
     </div>
     <div class="card-body">
-      <div class="fg-meter">
-        <div class="fg-gauge"><div class="fg-gauge-bg"></div><div class="fg-needle" id="fgNeedle"></div></div>
-        <div class="fg-value" id="fgValue">--</div>
-        <div class="fg-label" id="fgLabel">Loading...</div>
+      <div class="fg-dual">
+        <div class="fg-meter">
+          <div class="fg-meter-title">CNN Market <span class="fg-src">S&amp;P 500</span></div>
+          <div class="fg-gauge"><div class="fg-gauge-bg"></div><div class="fg-needle" id="fgNeedleCnn"></div></div>
+          <div class="fg-value" id="fgValueCnn">--</div>
+          <div class="fg-label" id="fgLabelCnn">Loading...</div>
+        </div>
+        <div class="fg-meter">
+          <div class="fg-meter-title">Crypto <span class="fg-src">BTC</span></div>
+          <div class="fg-gauge"><div class="fg-gauge-bg"></div><div class="fg-needle" id="fgNeedle"></div></div>
+          <div class="fg-value" id="fgValue">--</div>
+          <div class="fg-label" id="fgLabel">Loading...</div>
+        </div>
       </div>
     </div>
   </div>
@@ -843,7 +857,7 @@ function getDashboardContext(){
   if(stockGrid&&stockGrid.children.length){ctx+='\n[GLOBAL INDICES]\n';stockGrid.querySelectorAll('.mkt-tile').forEach(t=>{ctx+=`${t.querySelector('.mkt-flag')?.textContent||''} ${t.querySelector('.mkt-tile-name')?.textContent||''}: ${t.querySelector('.mkt-tile-price')?.textContent||''} (${t.querySelector('.mkt-tile-pct')?.textContent||''})\n`})}
   const comGrid=document.getElementById('grid-commodities');
   if(comGrid&&comGrid.children.length){ctx+='\n[COMMODITIES]\n';comGrid.querySelectorAll('.mkt-tile').forEach(t=>{ctx+=`${t.querySelector('.mkt-tile-name')?.textContent||''}: ${t.querySelector('.mkt-tile-price')?.textContent||''} (${t.querySelector('.mkt-tile-pct')?.textContent||''})\n`})}
-  ctx+=`\n[FEAR & GREED INDEX]: ${document.getElementById('fgValue').textContent} (${document.getElementById('fgLabel').textContent})\n`;
+  ctx+=`\n[FEAR & GREED INDEX]\nCNN Market (S&P 500): ${document.getElementById('fgValueCnn').textContent} (${document.getElementById('fgLabelCnn').textContent})\nCrypto (BTC): ${document.getElementById('fgValue').textContent} (${document.getElementById('fgLabel').textContent})\n`;
   if(projects.length){ctx+='\n[PROJECTS]\n';projects.forEach(p=>ctx+=`- ${p.name} [${p.status}]\n`)}
   if(reminders.length){ctx+='\n[REMINDERS]\n';reminders.forEach(r=>ctx+=`- ${r}\n`)}
   if(notes.length){ctx+='\n[QUICK NOTES]\n';notes.forEach(n=>ctx+=`- ${n.text}\n`)}
@@ -924,7 +938,7 @@ const cmds={
   '/indices':()=>getIndicesSummary(),'/crypto':()=>getCryptoSummary(),'/commodities':()=>getCommoditiesSummary(),'/btc':()=>getBtcDetail(),
   '/projects':()=>{if(!projects.length)return'No projects.';const b={};projects.forEach(p=>{if(!b[p.status])b[p.status]=[];b[p.status].push(p.name)});let o='<strong>Projects:</strong><br>';['active','planning','review','done'].forEach(s=>{if(b[s])o+=`<br><span class="cmd">${statusLabels[s]}</span> (${b[s].length}): ${b[s].join(', ')}`});return o},
   '/news':()=>{const items=document.querySelectorAll('.news-item');if(!items.length)return'Loading...';let b=0,be=0,n=0;items.forEach(i=>{const t=i.querySelector('.news-tag');if(t?.classList.contains('tag-bullish'))b++;else if(t?.classList.contains('tag-bearish'))be++;else n++});return`<strong>Sentiment:</strong> ${items.length} articles | Bullish: <strong>${b}</strong> | Bearish: <strong>${be}</strong> | Neutral: <strong>${n}</strong> | Bias: <span class="cmd">${b>be?'Bullish':be>b?'Bearish':'Mixed'}</span>`},
-  '/fear':()=>{const v=document.getElementById('fgValue').textContent;const l=document.getElementById('fgLabel').textContent;const val=parseInt(v);let a=val<=25?'Extreme fear — contrarian buy signal.':val<=40?'Fear — watch for reversal.':val<=60?'Neutral.':val<=75?'Greed — tighten stops.':'Extreme greed — go defensive.';return`<strong>F&G: ${v}</strong> (${l})<br>${a}`},
+  '/fear':()=>{const cv=document.getElementById('fgValueCnn').textContent;const cl=document.getElementById('fgLabelCnn').textContent;const v=document.getElementById('fgValue').textContent;const l=document.getElementById('fgLabel').textContent;const cval=parseInt(cv);const val=parseInt(v);let ac=cval<=25?'Extreme fear — contrarian buy signal.':cval<=40?'Fear — watch for reversal.':cval<=60?'Neutral.':cval<=75?'Greed — tighten stops.':'Extreme greed — go defensive.';let a=val<=25?'Extreme fear — accumulation zone.':val<=40?'Fear — watch for reversal.':val<=60?'Neutral.':val<=75?'Greed — manage risk.':'Extreme greed — go defensive.';return`<strong>CNN Market F&G: ${cv}</strong> (${cl})<br>${ac}<br><br><strong>Crypto F&G: ${v}</strong> (${l})<br>${a}`},
   '/focus':()=>{pomoReset.click();setTimeout(()=>pomoToggle.click(),100);return'Pomodoro started. 25 min focus.'},
   '/time':()=>`<strong>${new Date().toLocaleString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',timeZoneName:'short'})}</strong>`,
   '/clear':()=>{chatMessages.innerHTML='';chatHistory=[];return null}
@@ -1172,53 +1186,63 @@ async function fetchNews(){
 fetchNews();
 setInterval(fetchNews,5*60*1000); // refresh every 5 min
 
-/* ═══ FEAR & GREED — LIVE API ═══ */
-async function updateFG(){
-  const fgVal=document.getElementById('fgValue');
-  const fgLab=document.getElementById('fgLabel');
-  const fgNeedle=document.getElementById('fgNeedle');
+/* ═══ FEAR & GREED — DUAL LIVE API ═══ */
+function setGauge(needleId,valId,labId,v,label){
+  document.getElementById(valId).textContent=Math.round(v);
+  document.getElementById(labId).textContent=label;
+  document.getElementById(needleId).style.setProperty('--needle-deg',(-90+(v/100)*180)+'deg');
+}
 
+// CNN Fear & Greed (via allorigins proxy -> CNN dataviz API)
+async function updateFGCnn(){
   try{
-    // alternative.me Crypto Fear & Greed API (free, no key)
+    const proxy='https://api.allorigins.win/raw?url='+encodeURIComponent('https://production.dataviz.cnn.io/index/fearandgreed/graphdata');
+    const resp=await fetch(proxy);
+    if(resp.ok){
+      const data=await resp.json();
+      const fg=data.fear_and_greed;
+      const v=fg.score;
+      const label=fg.rating.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      setGauge('fgNeedleCnn','fgValueCnn','fgLabelCnn',v,label);
+      return;
+    }
+  }catch(e){}
+  // Fallback
+  const v=Math.floor(Math.random()*30)+35;
+  const labels=['Extreme Fear','Fear','Neutral','Greed','Extreme Greed'];
+  let l;if(v<=20)l=labels[0];else if(v<=40)l=labels[1];else if(v<=60)l=labels[2];else if(v<=80)l=labels[3];else l=labels[4];
+  setGauge('fgNeedleCnn','fgValueCnn','fgLabelCnn',v,l+' (offline)');
+}
+
+// Crypto Fear & Greed (alternative.me)
+async function updateFGCrypto(){
+  try{
     const resp=await fetch('https://api.alternative.me/fng/?limit=1');
     if(resp.ok){
       const data=await resp.json();
       const entry=data.data[0];
-      const v=parseInt(entry.value);
-      const label=entry.value_classification;
-      fgVal.textContent=v;
-      fgLab.textContent=label;
-      fgNeedle.style.setProperty('--needle-deg',(-90+(v/100)*180)+'deg');
+      setGauge('fgNeedle','fgValue','fgLabel',parseInt(entry.value),entry.value_classification);
       return;
     }
   }catch(e){}
-
-  // Fallback: try via CORS proxy
   try{
     const proxy='https://api.allorigins.win/raw?url='+encodeURIComponent('https://api.alternative.me/fng/?limit=1');
     const resp=await fetch(proxy);
     if(resp.ok){
       const data=await resp.json();
       const entry=data.data[0];
-      const v=parseInt(entry.value);
-      const label=entry.value_classification;
-      fgVal.textContent=v;
-      fgLab.textContent=label;
-      fgNeedle.style.setProperty('--needle-deg',(-90+(v/100)*180)+'deg');
+      setGauge('fgNeedle','fgValue','fgLabel',parseInt(entry.value),entry.value_classification);
       return;
     }
   }catch(e){}
-
-  // Final fallback: simulated realistic value
   const v=Math.floor(Math.random()*30)+40;
   const labels=['Extreme Fear','Fear','Neutral','Greed','Extreme Greed'];
   let l;if(v<=20)l=labels[0];else if(v<=40)l=labels[1];else if(v<=60)l=labels[2];else if(v<=80)l=labels[3];else l=labels[4];
-  fgVal.textContent=v;
-  fgLab.textContent=l+' (offline)';
-  fgNeedle.style.setProperty('--needle-deg',(-90+(v/100)*180)+'deg');
+  setGauge('fgNeedle','fgValue','fgLabel',v,l+' (offline)');
 }
-updateFG();
-setInterval(updateFG,10*60*1000); // refresh every 10 min
+
+updateFGCnn();updateFGCrypto();
+setInterval(()=>{updateFGCnn();updateFGCrypto()},10*60*1000);
 
 /* ═══ UTIL ═══ */
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}

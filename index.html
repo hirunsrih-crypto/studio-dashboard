@@ -1080,7 +1080,7 @@ async function fetchEconCalendar(){
   const badge=document.getElementById('econBadge');
 
   try{
-    const resp=await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
+    const resp=await fetch('https://cnn-fng-proxy.vercel.app/api/econ');
     if(!resp.ok)throw new Error('fetch failed');
     const data=await resp.json();
 

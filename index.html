@@ -145,6 +145,14 @@ body{font-family:var(--font-main);background:var(--bg-0);color:var(--text-1);min
 .mkt-loader{text-align:center;padding:30px;color:var(--text-4);font-size:0.82rem;font-family:var(--font-mono)}
 .mkt-flag{font-size:0.68rem;font-family:var(--font-mono);font-weight:600;padding:2px 6px;border-radius:4px;background:var(--bg-3);color:var(--text-3);letter-spacing:.3px;flex-shrink:0}
 .mkt-tile-region{font-size:0.62rem;color:var(--text-4);margin-top:1px}
+/* Country section headers */
+.mkt-section{margin-bottom:14px}
+.mkt-section:last-child{margin-bottom:0}
+.mkt-section-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 2px}
+.mkt-section-flag{font-size:0.82rem;line-height:1}
+.mkt-section-name{font-size:0.72rem;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:1.2px;font-family:var(--font-mono)}
+.mkt-section-line{flex:1;height:1px;background:var(--border)}
+.mkt-section-count{font-size:0.6rem;color:var(--text-4);font-family:var(--font-mono);padding:2px 6px;border-radius:4px;background:var(--bg-2)}
 @media(max-width:1100px){.mkt-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:600px){.mkt-grid{grid-template-columns:repeat(2,1fr)}.mkt-tile.hero{grid-column:span 2}}
 .mkt-loader{text-align:center;padding:20px;color:var(--text-4);font-size:0.82rem}
@@ -433,12 +441,12 @@ body::before{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
 
       <div class="mkt-panel active" id="panel-stocks">
         <div class="mkt-loader" id="loader-stocks">Fetching stock data...</div>
-        <div class="mkt-grid" id="grid-stocks" style="display:none"></div>
+        <div id="grid-stocks" style="display:none"></div>
       </div>
 
       <div class="mkt-panel" id="panel-commodities">
         <div class="mkt-loader" id="loader-commodities">Fetching commodity data...</div>
-        <div class="mkt-grid" id="grid-commodities" style="display:none"></div>
+        <div id="grid-commodities" style="display:none"></div>
       </div>
 
       <div class="mkt-panel" id="panel-crypto">
@@ -601,35 +609,45 @@ document.querySelectorAll('.mkt-tab').forEach(tab=>{
 const YAHOO_CORS='https://query1.finance.yahoo.com/v8/finance/chart/';
 const YAHOO_QUOTE='https://query1.finance.yahoo.com/v6/finance/quote?symbols=';
 
+const stockGroups=[
+  {key:'us',name:'United States',emoji:'\u{1F1FA}\u{1F1F8}'},
+  {key:'eu',name:'Europe',emoji:'\u{1F1EA}\u{1F1FA}'},
+  {key:'cn',name:'China & Hong Kong',emoji:'\u{1F1E8}\u{1F1F3}'},
+  {key:'jp',name:'Japan',emoji:'\u{1F1EF}\u{1F1F5}'},
+  {key:'kr',name:'South Korea',emoji:'\u{1F1F0}\u{1F1F7}'},
+  {key:'in',name:'India',emoji:'\u{1F1EE}\u{1F1F3}'},
+  {key:'th',name:'Thailand',emoji:'\u{1F1F9}\u{1F1ED}'},
+  {key:'il',name:'Israel',emoji:'\u{1F1EE}\u{1F1F1}'},
+];
 const stockSymbols=[
   // US
-  {sym:'^GSPC',name:'S&P 500',flag:'US',region:'United States'},
-  {sym:'^DJI',name:'Dow Jones',flag:'US',region:'United States'},
-  {sym:'^IXIC',name:'Nasdaq',flag:'US',region:'United States'},
-  {sym:'^RUT',name:'Russell 2000',flag:'US',region:'United States'},
-  // China
-  {sym:'000001.SS',name:'SSE Composite',flag:'CN',region:'China'},
-  {sym:'399001.SZ',name:'SZSE Component',flag:'CN',region:'China'},
-  {sym:'^HSI',name:'Hang Seng',flag:'HK',region:'Hong Kong'},
-  // EU
-  {sym:'^STOXX50E',name:'Euro Stoxx 50',flag:'EU',region:'Europe'},
-  {sym:'^FTSE',name:'FTSE 100',flag:'GB',region:'United Kingdom'},
-  {sym:'^GDAXI',name:'DAX 40',flag:'DE',region:'Germany'},
-  {sym:'^FCHI',name:'CAC 40',flag:'FR',region:'France'},
-  // India
-  {sym:'^BSESN',name:'BSE Sensex',flag:'IN',region:'India'},
-  {sym:'^NSEI',name:'Nifty 50',flag:'IN',region:'India'},
-  // Israel
-  {sym:'^TA125.TA',name:'TA-125',flag:'IL',region:'Israel'},
+  {sym:'^GSPC',name:'S&P 500',flag:'US',region:'United States',group:'us'},
+  {sym:'^DJI',name:'Dow Jones',flag:'US',region:'United States',group:'us'},
+  {sym:'^IXIC',name:'Nasdaq',flag:'US',region:'United States',group:'us'},
+  {sym:'^RUT',name:'Russell 2000',flag:'US',region:'United States',group:'us'},
+  // Europe
+  {sym:'^STOXX50E',name:'Euro Stoxx 50',flag:'EU',region:'Europe',group:'eu'},
+  {sym:'^FTSE',name:'FTSE 100',flag:'GB',region:'United Kingdom',group:'eu'},
+  {sym:'^GDAXI',name:'DAX 40',flag:'DE',region:'Germany',group:'eu'},
+  {sym:'^FCHI',name:'CAC 40',flag:'FR',region:'France',group:'eu'},
+  // China & HK
+  {sym:'000001.SS',name:'SSE Composite',flag:'CN',region:'China',group:'cn'},
+  {sym:'399001.SZ',name:'SZSE Component',flag:'CN',region:'China',group:'cn'},
+  {sym:'^HSI',name:'Hang Seng',flag:'HK',region:'Hong Kong',group:'cn'},
   // Japan
-  {sym:'^N225',name:'Nikkei 225',flag:'JP',region:'Japan'},
-  {sym:'^TOPX',name:'TOPIX',flag:'JP',region:'Japan'},
+  {sym:'^N225',name:'Nikkei 225',flag:'JP',region:'Japan',group:'jp'},
+  {sym:'^TOPX',name:'TOPIX',flag:'JP',region:'Japan',group:'jp'},
   // Korea
-  {sym:'^KS11',name:'KOSPI',flag:'KR',region:'South Korea'},
-  {sym:'^KQ11',name:'KOSDAQ',flag:'KR',region:'South Korea'},
+  {sym:'^KS11',name:'KOSPI',flag:'KR',region:'South Korea',group:'kr'},
+  {sym:'^KQ11',name:'KOSDAQ',flag:'KR',region:'South Korea',group:'kr'},
+  // India
+  {sym:'^BSESN',name:'BSE Sensex',flag:'IN',region:'India',group:'in'},
+  {sym:'^NSEI',name:'Nifty 50',flag:'IN',region:'India',group:'in'},
   // Thailand
-  {sym:'^SET.BK',name:'SET Index',flag:'TH',region:'Thailand'},
-  {sym:'^SET50.BK',name:'SET50',flag:'TH',region:'Thailand'},
+  {sym:'^SET.BK',name:'SET Index',flag:'TH',region:'Thailand',group:'th'},
+  {sym:'^SET50.BK',name:'SET50',flag:'TH',region:'Thailand',group:'th'},
+  // Israel
+  {sym:'^TA125.TA',name:'TA-125',flag:'IL',region:'Israel',group:'il'},
 ];
 const commoditySymbols=[
   {sym:'GC=F',name:'Gold'},
@@ -667,11 +685,11 @@ async function fetchYahoo(symbols,gridId,loaderId){
           const prevClose=meta.chartPreviousClose||meta.previousClose;
           const change=price-prevClose;
           const pct=(change/prevClose)*100;
-          results.push({name:item.name,sym:item.sym,price,change,pct,flag:item.flag,region:item.region});
+          results.push({name:item.name,sym:item.sym,price,change,pct,flag:item.flag,region:item.region,group:item.group});
           fetched=true;
         }else{throw new Error('blocked')}
       }catch(e){
-        results.push({name:item.name,sym:item.sym,price:null,change:null,pct:null,flag:item.flag,region:item.region});
+        results.push({name:item.name,sym:item.sym,price:null,change:null,pct:null,flag:item.flag,region:item.region,group:item.group});
       }
     }
 
@@ -716,43 +734,62 @@ function generateSimulated(symbols){
     const pct=(Math.random()-0.48)*3;
     const price=base*(1+pct/100);
     const change=price-base;
-    return{name:s.name,sym:s.sym,price,change,pct,flag:s.flag,region:s.region};
+    return{name:s.name,sym:s.sym,price,change,pct,flag:s.flag,region:s.region,group:s.group};
   });
 }
 
-function renderGrid(data,gridId,loaderId){
-  const grid=document.getElementById(gridId);
+function renderTile(d){
   const arrowUp='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>';
   const arrowDn='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>';
-
-  // Country code to flag emoji-like SVG labels
   const flagMap={'US':'US','CN':'CN','HK':'HK','EU':'EU','GB':'GB','DE':'DE','FR':'FR','IN':'IN','IL':'IL','JP':'JP','KR':'KR','TH':'TH'};
+  const up=d.pct>=0;
+  const arrow=up?arrowUp:arrowDn;
+  const sparkClass=up?'mkt-spark-up':'mkt-spark-down';
+  const pctClass=up?'mkt-pct-up':'mkt-pct-down';
+  const chgCls=up?'mkt-up':'mkt-down';
+  const sparkW=Math.min(Math.abs(d.pct||0)*20,100);
+  const flagHtml=d.flag?`<span class="mkt-flag">${flagMap[d.flag]||d.flag}</span>`:'';
+  return`<div class="mkt-tile">
+    <div class="mkt-tile-head">
+      <span class="mkt-tile-name">${d.name}</span>
+      ${flagHtml}
+    </div>
+    <div class="mkt-tile-price">${d.price!=null?(d.sym.includes('BSE')||d.sym.includes('NSE')?'₹':d.sym.includes('TA125')?'₪':d.sym.includes('SET')?'฿':d.sym.includes('KS')||d.sym.includes('KQ')?'₩':d.sym.includes('N225')||d.sym.includes('TOPX')?'¥':d.sym.includes('HSI')?'HK$':d.sym.includes('000001')||d.sym.includes('399001')?'¥':'$')+fmtPrice(d.price):'--'}</div>
+    <div class="mkt-tile-bottom">
+      <span class="mkt-tile-chg ${chgCls}">${arrow} ${fmtChg(d.change)}</span>
+      <span class="mkt-tile-pct ${pctClass}">${fmtPct(d.pct)}</span>
+    </div>
+    <div class="mkt-spark ${sparkClass}" style="width:${sparkW}%"></div>
+  </div>`;
+}
 
-  grid.innerHTML=data.map(d=>{
-    const up=d.pct>=0;
-    const arrow=up?arrowUp:arrowDn;
-    const sparkClass=up?'mkt-spark-up':'mkt-spark-down';
-    const pctClass=up?'mkt-pct-up':'mkt-pct-down';
-    const chgCls=up?'mkt-up':'mkt-down';
-    const sparkW=Math.min(Math.abs(d.pct||0)*20,100);
-    const flagHtml=d.flag?`<span class="mkt-flag">${flagMap[d.flag]||d.flag}</span>`:'';
-    const regionHtml=d.region?`<div class="mkt-tile-region">${d.region}</div>`:'';
-    return`<div class="mkt-tile">
-      <div class="mkt-tile-head">
-        <span class="mkt-tile-name">${d.name}</span>
-        ${flagHtml}
-      </div>
-      ${regionHtml}
-      <div class="mkt-tile-price">${d.price!=null?(d.sym.includes('BSE')||d.sym.includes('NSE')?'₹':d.sym.includes('TA125')?'₪':d.sym.includes('SET')?'฿':d.sym.includes('KS')||d.sym.includes('KQ')?'₩':d.sym.includes('N225')||d.sym.includes('TOPX')?'¥':d.sym.includes('HSI')?'HK$':d.sym.includes('000001')||d.sym.includes('399001')?'¥':'$')+fmtPrice(d.price):'--'}</div>
-      <div class="mkt-tile-bottom">
-        <span class="mkt-tile-chg ${chgCls}">${arrow} ${fmtChg(d.change)}</span>
-        <span class="mkt-tile-pct ${pctClass}">${fmtPct(d.pct)}</span>
-      </div>
-      <div class="mkt-spark ${sparkClass}" style="width:${sparkW}%"></div>
-    </div>`;
-  }).join('');
+function renderGrid(data,gridId,loaderId){
+  const container=document.getElementById(gridId);
+  // Grouped rendering for stocks
+  if(gridId==='grid-stocks'&&data.length&&data[0].group){
+    const groupMap={};
+    data.forEach(d=>{if(!groupMap[d.group])groupMap[d.group]=[];groupMap[d.group].push(d)});
+    let html='';
+    stockGroups.forEach(g=>{
+      const items=groupMap[g.key];
+      if(!items||!items.length)return;
+      html+=`<div class="mkt-section">
+        <div class="mkt-section-head">
+          <span class="mkt-section-flag">${g.emoji}</span>
+          <span class="mkt-section-name">${g.name}</span>
+          <div class="mkt-section-line"></div>
+          <span class="mkt-section-count">${items.length}</span>
+        </div>
+        <div class="mkt-grid">${items.map(d=>renderTile(d)).join('')}</div>
+      </div>`;
+    });
+    container.innerHTML=html;
+  }else{
+    // Flat grid for commodities
+    container.innerHTML=`<div class="mkt-grid">${data.map(d=>renderTile(d)).join('')}</div>`;
+  }
   document.getElementById(loaderId).style.display='none';
-  grid.style.display='grid';
+  container.style.display='block';
 }
 
 // Init stock & commodity data

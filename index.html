@@ -1193,16 +1193,14 @@ function setGauge(needleId,valId,labId,v,label){
   document.getElementById(needleId).style.setProperty('--needle-deg',(-90+(v/100)*180)+'deg');
 }
 
-// CNN Fear & Greed (via allorigins proxy -> CNN dataviz API)
+// CNN Fear & Greed (via Vercel proxy -> CNN dataviz API)
 async function updateFGCnn(){
   try{
-    const proxy='https://api.allorigins.win/raw?url='+encodeURIComponent('https://production.dataviz.cnn.io/index/fearandgreed/graphdata');
-    const resp=await fetch(proxy);
+    const resp=await fetch('https://cnn-fng-proxy.vercel.app/api/fng');
     if(resp.ok){
       const data=await resp.json();
-      const fg=data.fear_and_greed;
-      const v=fg.score;
-      const label=fg.rating.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      const v=data.score;
+      const label=data.rating.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
       setGauge('fgNeedleCnn','fgValueCnn','fgLabelCnn',v,label);
       return;
     }

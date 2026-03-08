@@ -237,6 +237,11 @@ body{font-family:var(--font-main);background:var(--bg-0);color:var(--text-1);min
 .econ-impact-tag.high{background:rgba(217,83,79,.12);color:var(--red)}
 .econ-impact-tag.medium{background:rgba(217,184,74,.12);color:var(--yellow)}
 .econ-impact-tag.low{background:rgba(107,189,110,.12);color:var(--green)}
+.econ-fp{display:flex;gap:10px;margin-top:4px}
+.econ-fp span{font-size:0.65rem;font-family:var(--font-mono);color:var(--text-4)}
+.econ-fp strong{color:var(--text-2);font-weight:600}
+.econ-day-label{font-size:0.68rem;font-family:var(--font-mono);font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;padding:6px 0 4px;display:flex;align-items:center;gap:8px}
+.econ-day-label::after{content:'';flex:1;height:1px;background:var(--border)}
 .econ-loader{text-align:center;padding:20px;color:var(--text-4);font-size:0.82rem;font-family:var(--font-mono)}
 
 /* ═══ EMAIL ═══ */
@@ -1067,79 +1072,69 @@ document.getElementById('reminderAdd').onclick=addRem;
 reminderInput.onkeydown=e=>{if(e.key==='Enter')addRem()};
 renderRem();
 
-/* ═══ ECONOMIC CALENDAR ═══ */
+/* ═══ ECONOMIC CALENDAR — FOREX FACTORY LIVE ═══ */
+const ccyToCountry={USD:'US',EUR:'EU',GBP:'GB',JPY:'JP',AUD:'AU',CAD:'CA',CHF:'CH',NZD:'NZ',CNY:'CN'};
 async function fetchEconCalendar(){
   const loader=document.getElementById('econLoader');
   const container=document.getElementById('econEvents');
-  let events=[];
+  const badge=document.getElementById('econBadge');
 
-  // Try fetching from Trading Economics or similar free API
   try{
-    const today=new Date();
-    const dateStr=today.toISOString().split('T')[0];
-    // Try nager.at for public holidays + use curated econ events
-    const resp=await fetch('https://date.nager.at/api/v3/PublicHolidays/'+today.getFullYear()+'/US');
-    if(resp.ok){
-      const holidays=await resp.json();
-      const todayHolidays=holidays.filter(h=>h.date===dateStr);
-      todayHolidays.forEach(h=>events.push({title:h.localName+' (Market Holiday)',time:'All Day',country:'US',impact:'high'}));
+    const resp=await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
+    if(!resp.ok)throw new Error('fetch failed');
+    const data=await resp.json();
+
+    const now=new Date();
+    const todayStr=now.toISOString().split('T')[0];
+    const dow=now.getDay();
+
+    // Filter: today's events (High + Medium only)
+    let filtered=data.filter(e=>{
+      const eDate=e.date.substring(0,10);
+      return eDate===todayStr&&(e.impact==='High'||e.impact==='Medium');
+    });
+
+    // If weekend or no events today, show next trading day
+    let labelDay='Today';
+    if(!filtered.length){
+      // Find the next weekday with events
+      const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const allDates=[...new Set(data.map(e=>e.date.substring(0,10)))].sort();
+      let nextDate=null;
+      for(const d of allDates){
+        if(d>todayStr){nextDate=d;break}
+      }
+      if(nextDate){
+        filtered=data.filter(e=>e.date.substring(0,10)===nextDate&&(e.impact==='High'||e.impact==='Medium'));
+        const nd=new Date(nextDate+'T00:00:00');
+        labelDay=days[nd.getDay()]+' '+nd.getDate()+'/'+(nd.getMonth()+1);
+      }
     }
-  }catch(e){}
 
-  // Curated economic events based on day of week
-  const dow=new Date().getDay();
-  const econData={
-    1:[ // Monday
-      {title:'Manufacturing PMI',time:'09:45',country:'US',impact:'high'},
-      {title:'ISM Manufacturing Index',time:'10:00',country:'US',impact:'high'},
-      {title:'Construction Spending',time:'10:00',country:'US',impact:'medium'},
-      {title:'Caixin Manufacturing PMI',time:'09:45',country:'CN',impact:'high'},
-      {title:'BOJ Summary of Opinions',time:'23:50',country:'JP',impact:'medium'},
-    ],
-    2:[ // Tuesday
-      {title:'JOLTS Job Openings',time:'10:00',country:'US',impact:'high'},
-      {title:'Factory Orders',time:'10:00',country:'US',impact:'medium'},
-      {title:'RBA Interest Rate Decision',time:'03:30',country:'AU',impact:'high'},
-      {title:'CPI Flash Estimate',time:'10:00',country:'EU',impact:'high'},
-      {title:'API Weekly Crude Oil Stock',time:'16:30',country:'US',impact:'medium'},
-    ],
-    3:[ // Wednesday
-      {title:'ADP Nonfarm Employment',time:'08:15',country:'US',impact:'high'},
-      {title:'Services PMI',time:'09:45',country:'US',impact:'high'},
-      {title:'ISM Non-Manufacturing Index',time:'10:00',country:'US',impact:'high'},
-      {title:'EIA Crude Oil Inventories',time:'10:30',country:'US',impact:'high'},
-      {title:'BOC Interest Rate Decision',time:'10:00',country:'CA',impact:'high'},
-    ],
-    4:[ // Thursday
-      {title:'Initial Jobless Claims',time:'08:30',country:'US',impact:'high'},
-      {title:'Trade Balance',time:'08:30',country:'US',impact:'medium'},
-      {title:'ECB Interest Rate Decision',time:'08:15',country:'EU',impact:'high'},
-      {title:'Natural Gas Storage',time:'10:30',country:'US',impact:'medium'},
-      {title:'Consumer Credit',time:'15:00',country:'US',impact:'medium'},
-    ],
-    5:[ // Friday
-      {title:'Nonfarm Payrolls',time:'08:30',country:'US',impact:'high'},
-      {title:'Unemployment Rate',time:'08:30',country:'US',impact:'high'},
-      {title:'Average Hourly Earnings',time:'08:30',country:'US',impact:'high'},
-      {title:'Consumer Sentiment (UoM)',time:'10:00',country:'US',impact:'high'},
-      {title:'Baker Hughes Rig Count',time:'13:00',country:'US',impact:'medium'},
-    ],
-    6:[ // Saturday
-      {title:'No major events scheduled',time:'--',country:'--',impact:'low'},
-    ],
-    0:[ // Sunday
-      {title:'No major events scheduled',time:'--',country:'--',impact:'low'},
-    ],
-  };
+    // Sort by time
+    filtered.sort((a,b)=>a.date.localeCompare(b.date));
 
-  events=events.concat(econData[dow]||[]);
+    loader.style.display='none';
+    if(!filtered.length){
+      container.innerHTML='<div class="econ-loader">No high-impact events scheduled.</div>';
+      badge.textContent='No Events';
+      return;
+    }
 
-  loader.style.display='none';
-  if(!events.length){container.innerHTML='<div class="econ-loader">No events today.</div>';return}
-  container.innerHTML=events.map(e=>`<div class="econ-event"><div class="econ-impact ${e.impact}"></div><div style="flex:1;min-width:0"><div class="econ-title">${esc(e.title)}</div><div class="econ-meta"><span class="econ-time">${e.time}</span><span class="econ-country">${e.country}</span><span class="econ-impact-tag ${e.impact}">${e.impact}</span></div></div></div>`).join('');
-  document.getElementById('econBadge').textContent=events.length+' Events';
+    container.innerHTML=filtered.map(e=>{
+      const time=e.date.substring(11,16);
+      const impact=e.impact.toLowerCase();
+      const country=ccyToCountry[e.country]||e.country;
+      const fpHtml=(e.forecast||e.previous)?`<div class="econ-fp">${e.forecast?`<span>F: <strong>${esc(e.forecast)}</strong></span>`:''}${e.previous?`<span>P: <strong>${esc(e.previous)}</strong></span>`:''}</div>`:'';
+      return`<div class="econ-event"><div class="econ-impact ${impact}"></div><div style="flex:1;min-width:0"><div class="econ-title">${esc(e.title)}</div><div class="econ-meta"><span class="econ-time">${time}</span><span class="econ-country">${country}</span><span class="econ-impact-tag ${impact}">${impact}</span></div>${fpHtml}</div></div>`;
+    }).join('');
+    badge.textContent=labelDay+' \u00B7 '+filtered.length;
+  }catch(err){
+    loader.textContent='Failed to load calendar.';
+  }
 }
 fetchEconCalendar();
+setInterval(fetchEconCalendar,30*60*1000);
 
 /* ═══ EMAIL MOCK ═══ */
 function connectEmail(){

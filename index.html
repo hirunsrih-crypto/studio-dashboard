@@ -244,17 +244,6 @@ body{font-family:var(--font-main);background:var(--bg-0);color:var(--text-1);min
 .econ-day-label::after{content:'';flex:1;height:1px;background:var(--border)}
 .econ-loader{text-align:center;padding:20px;color:var(--text-4);font-size:0.82rem;font-family:var(--font-mono)}
 
-/* ═══ EMAIL ═══ */
-.email-connected{display:none}
-.email-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg-3) transparent}
-.email-item{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;border-radius:var(--radius-sm);background:var(--bg-2);transition:var(--tr);cursor:pointer}
-.email-item:hover{background:var(--accent-dim)}
-.email-unread{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:7px}
-.email-info{flex:1;min-width:0}
-.email-from{font-size:0.82rem;color:var(--text-1);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.email-subject{font-size:0.78rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.email-time{font-size:0.68rem;color:var(--text-4);font-family:var(--font-mono);flex-shrink:0;margin-top:3px}
-
 /* ═══ NEWS ═══ */
 .news-list{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg-3) transparent}
 .news-item{padding:11px 13px;border-radius:var(--radius-sm);background:var(--bg-2);transition:var(--tr);cursor:pointer}
@@ -482,21 +471,6 @@ body::before{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
         <button class="s-btn-icon" id="projAdd"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
       </div>
       <div class="proj-list" id="projList"></div>
-    </div>
-  </div>
-
-  <!-- RIGHT: Unread Emails -->
-  <div class="card">
-    <div class="card-head">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 4 12 13 2 4"/></svg>
-      Unread Emails<span class="badge" id="emailCount">0</span>
-    </div>
-    <div class="card-body">
-      <div id="emailDisconnected">
-        <div class="placeholder-list" style="margin-bottom:12px"><div class="placeholder-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 4 12 13 2 4"/></svg>Connect Outlook to see unread emails</div></div>
-        <button class="connect-btn" onclick="connectEmail()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Connect Outlook</button>
-      </div>
-      <div class="email-connected" id="emailConnected"><div class="email-list" id="emailList"></div></div>
     </div>
   </div>
 
@@ -1136,14 +1110,6 @@ async function fetchEconCalendar(){
 fetchEconCalendar();
 setInterval(fetchEconCalendar,30*60*1000);
 
-/* ═══ EMAIL MOCK ═══ */
-function connectEmail(){
-  document.getElementById('emailDisconnected').style.display='none';
-  document.getElementById('emailConnected').style.display='block';
-  const em=[{f:'Research Desk',s:'Updated macro outlook for Q1 2026',t:'09:12'},{f:'Compliance',s:'Monthly trading report due Friday',t:'08:45'},{f:'CIO Office',s:'Re: Sector allocation changes',t:'08:20'},{f:'Bloomberg Alert',s:'BTC breaks key resistance level',t:'07:55'},{f:'IT Support',s:'VPN maintenance tonight 22:00-02:00',t:'Yest.'}];
-  document.getElementById('emailCount').textContent=em.length;
-  document.getElementById('emailList').innerHTML=em.map(e=>`<div class="email-item"><div class="email-unread"></div><div class="email-info"><div class="email-from">${e.f}</div><div class="email-subject">${e.s}</div></div><div class="email-time">${e.t}</div></div>`).join('');
-}
 
 /* ═══ NEWS — LIVE FEED ═══ */
 async function fetchNews(){
